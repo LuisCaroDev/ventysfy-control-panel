@@ -15,9 +15,9 @@ Panel de control (Backoffice) de VentySfy. Construido con **Svelte 5** y **Svelt
 
 - **Autenticación y Sesiones:** Inicio de sesión y manejo de sesiones a través de un proxy seguro.
 - **Gestión de Negocios:** Listado y detalles de los negocios, incluyendo información de suscripción y estado.
-- **Facturación Electrónica (Colombia):** 
+- **Facturación Electrónica (Colombia):**
   - Gestión de credenciales y configuración técnica para la emisión de comprobantes (DIAN).
-  - Historial reactivo de documentos fiscales (Facturas, Notas Crédito, POS) con filtrado avanzado por texto, estado (Aceptado, Rechazado, Contingencia, etc.) y rangos de fecha mediante *Datepickers* premium.
+  - Historial reactivo de documentos fiscales (Facturas, Notas Crédito, POS) con filtrado avanzado por texto, estado (Aceptado, Rechazado, Contingencia, etc.) y rangos de fecha mediante _Datepickers_ premium.
   - Proxy local hacia la API de Facturación (`/api/invoicing/colombia`).
   - Depuración de peticiones al proveedor de facturación (Taxxa).
 - **Selector de Entorno:** Herramienta integrada en el login para cambiar la URL base de los endpoints y apuntar a desarrollo o producción.

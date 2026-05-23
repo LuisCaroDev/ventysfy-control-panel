@@ -117,6 +117,15 @@ export const businessesResponseSchema = z.object({
   }),
 });
 
+export const businessFiltersSchema = z.object({
+  status: z.array(z.string()),
+  country: z.array(z.string()),
+  docType: z.array(z.string()),
+  invoiceEnabled: z.enum(['all', 'active', 'inactive']),
+});
+
+export type BusinessFiltersForm = z.infer<typeof businessFiltersSchema>;
+
 // Plans schemas
 export const planSchema = z.object({
   id: z.string(),

@@ -5,7 +5,7 @@
   import { Skeleton } from '$lib/components/ui/skeleton';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import {
-    AlertCircle,
+    CircleAlert,
     Building2,
     MapPin,
     Wallet,
@@ -68,7 +68,12 @@
 
   let docsQuery = $derived(
     business && business.invoiceService?.enabled
-      ? useDocuments(business.docNumber, filters.state.fromDate, filters.state.toDate, filters.state.status)
+      ? useDocuments(
+          business.docNumber,
+          filters.state.fromDate,
+          filters.state.toDate,
+          filters.state.status,
+        )
       : null,
   );
 
@@ -108,12 +113,18 @@
 
   function translateDocumentStatus(status: string) {
     switch (status) {
-      case 'approved': return 'Aceptado';
-      case 'rejected': return 'Rechazado';
-      case 'contingency_dian': return 'Contingencia DIAN';
-      case 'contingency_taxxa': return 'Contingencia Taxxa';
-      case 'unknown': return 'Desconocido';
-      default: return status;
+      case 'approved':
+        return 'Aceptado';
+      case 'rejected':
+        return 'Rechazado';
+      case 'contingency_dian':
+        return 'Contingencia DIAN';
+      case 'contingency_taxxa':
+        return 'Contingencia Taxxa';
+      case 'unknown':
+        return 'Desconocido';
+      default:
+        return status;
     }
   }
 
@@ -163,7 +174,7 @@
     </div>
   {:else if query.isError}
     <Alert variant="destructive">
-      <AlertCircle class="h-4 w-4" />
+      <CircleAlert class="h-4 w-4" />
       <AlertDescription>Error al cargar el negocio.</AlertDescription>
     </Alert>
   {:else if business}

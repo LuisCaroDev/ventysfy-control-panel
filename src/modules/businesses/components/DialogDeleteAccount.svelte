@@ -3,7 +3,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Alert, AlertDescription, AlertTitle } from '$lib/components/ui/alert';
-  import AlertCircle from '@lucide/svelte/icons/alert-circle';
+  import CircleAlert from '@lucide/svelte/icons/alert-circle';
   import { toast } from 'svelte-sonner';
   import { useDeleteBusiness } from '$modules/businesses/queries';
   import type { Business } from '$modules/businesses/schemas';
@@ -56,7 +56,7 @@
 
     <div class="space-y-4 py-2">
       <Alert variant="destructive">
-        <AlertCircle class="h-4 w-4" />
+        <CircleAlert class="h-4 w-4" />
         <AlertTitle>Advertencia:</AlertTitle>
         <AlertDescription>
           Esta acción no es reversible. Por favor, proceda con cuidado.

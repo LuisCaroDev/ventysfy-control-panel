@@ -54,12 +54,18 @@
 
   function translateDocumentStatus(status: string) {
     switch (status) {
-      case 'approved': return 'Aceptado';
-      case 'rejected': return 'Rechazado';
-      case 'contingency_dian': return 'Contingencia DIAN';
-      case 'contingency_taxxa': return 'Contingencia Taxxa';
-      case 'unknown': return 'Desconocido';
-      default: return status;
+      case 'approved':
+        return 'Aceptado';
+      case 'rejected':
+        return 'Rechazado';
+      case 'contingency_dian':
+        return 'Contingencia DIAN';
+      case 'contingency_taxxa':
+        return 'Contingencia Taxxa';
+      case 'unknown':
+        return 'Desconocido';
+      default:
+        return status;
     }
   }
 </script>

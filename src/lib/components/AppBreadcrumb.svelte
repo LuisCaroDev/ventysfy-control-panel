@@ -23,6 +23,7 @@
     '/dashboard': { label: 'Dashboard', component: { type: 'link' } },
     '/businesses': { label: 'Negocios', component: { type: 'link' } },
     '/businesses/[businessId]': { component: { type: 'link' } },
+    '/users': { label: 'Usuarios', component: { type: 'link' } },
     '/team': { label: 'Equipo', component: { type: 'link' } },
     '/plans': { label: 'Planes', component: { type: 'link' } },
     '/plans/[dynamic]': { label: 'Plan', component: { type: 'link' } },

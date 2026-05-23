@@ -8,7 +8,6 @@ export class ApiError extends Error {
 }
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const isServer = typeof window === 'undefined';
   const prefix = path.startsWith('/v1') ? '/api/proxy' : '';
   const url = `${prefix}${path.startsWith('/') ? path : `/${path}`}`;
 

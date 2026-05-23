@@ -6,7 +6,7 @@
   import { Input } from '$lib/components/ui/input';
   import { Button } from '$lib/components/ui/button';
   import { Skeleton } from '$lib/components/ui/skeleton';
-  import { AlertCircle, RotateCcw } from '@lucide/svelte';
+  import { CircleAlert, RotateCcw } from '@lucide/svelte';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
 
   const businessesQuery = useBusinesses();
@@ -37,6 +37,10 @@
     return Array.from(set);
   });
 </script>
+
+<svelte:head>
+  <title>Negocios — VentySfy Admin</title>
+</svelte:head>
 
 <div class="flex flex-1 flex-col p-6 space-y-6">
   <div>
@@ -90,7 +94,7 @@
     </div>
   {:else if businessesQuery.isError}
     <Alert variant="destructive">
-      <AlertCircle class="h-4 w-4" />
+      <CircleAlert class="h-4 w-4" />
       <AlertDescription>
         Ocurrió un error al cargar los negocios. Por favor intente de nuevo.
       </AlertDescription>

@@ -32,7 +32,7 @@ export function createInvoicesFilters() {
       };
     }
     const params = get(page).url.searchParams;
-    
+
     // We try to read from stored local storage, but prioritizing URL params if they exist
     let stored: Partial<InvoicesFiltersState> = {};
     try {
@@ -93,7 +93,7 @@ export function createInvoicesFilters() {
       let count = 0;
       if (state.status.length) count++;
       if (state.search) count++;
-      
+
       const defaultFrom = getFallbackFrom();
       const defaultTo = getFallbackTo();
       if (state.fromDate !== defaultFrom || state.toDate !== defaultTo) {

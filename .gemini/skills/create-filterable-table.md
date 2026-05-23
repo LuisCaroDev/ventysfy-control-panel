@@ -115,19 +115,35 @@ export function createEntityFilters() {
 
 ## 3. Cajón de Filtros en Modo Borrador (`[Entity]FiltersDrawer.svelte`)
 
-Los filtros en el Drawer **no se deben aplicar instantáneamente** mientras el usuario interactúa. Se debe usar un estado borrador local (`tempState`) que se confirma cuando el usuario hace clic en "Aplicar", o se descarta si presiona "Close" o hace clic fuera.
+Los filtros en el Drawer **no se deben aplicar instantáneamente** mientras el usuario interactúa. Se debe usar un formulario borrador local con `superforms` + `zod`, que se confirma solo cuando el usuario hace clic en "Aplicar". Si el usuario cierra el drawer, el borrador se descarta al desmontarse el componente.
+
+### Regla de Implementación
+
+- No manejar el borrador con muchos `tempX = $state(...)`.
+- No usar `$effect` para copiar `filters.state` al abrir/cerrar el drawer.
+- Definir un `schema` Zod para los filtros del drawer en `src/modules/[entity]/schemas.ts`.
+- Crear un subcomponente tipo `[Entity]FiltersDrawerForm.svelte` que viva solo mientras el drawer está abierto.
+- Montar ese subcomponente con `{#if isDrawerOpen}` dentro de `[Entity]FiltersDrawer.svelte`.
+- Inicializar el draft con `defaults(...)` + `superForm(...)` usando los valores actuales de `filters.state`.
+- Al hacer clic en "Aplicar", validar el formulario y recién ahí propagar al store reactivo `filters`.
+
+### Por Qué
+
+- Evita resincronización manual con `$effect`.
+- Cada apertura crea un draft limpio desde el estado aplicado actual.
+- Cada cierre sin aplicar descarta cambios locales sin lógica extra.
 
 ### Estructura Recomendada
+
+#### Contenedor del Drawer
 
 ```svelte
 <script lang="ts">
   import * as Sheet from '$lib/components/ui/sheet';
-  import { Checkbox } from '$lib/components/ui/checkbox';
-  import { Button, buttonVariants } from '$lib/components/ui/button';
   import { Badge } from '$lib/components/ui/badge';
-  import { Separator } from '$lib/components/ui/separator';
   import { SlidersHorizontal } from '@lucide/svelte';
   import type { createEntityFilters } from '../filters.svelte';
+  import EntityFiltersDrawerForm from './EntityFiltersDrawerForm.svelte';
 
   let {
     filters,
@@ -140,22 +156,6 @@ Los filtros en el Drawer **no se deben aplicar instantáneamente** mientras el u
   } = $props();
 
   let isDrawerOpen = $state(false);
-  let tempStatus = $state<string[]>([]);
-  let tempCategory = $state<string[]>([]);
-
-  // Copia el estado de los filtros al abrir el drawer
-  $effect(() => {
-    if (isDrawerOpen) {
-      tempStatus = [...filters.state.status];
-      tempCategory = [...filters.state.category];
-    }
-  });
-
-  function applyFilters() {
-    filters.setStatus(tempStatus);
-    filters.setCategory(tempCategory);
-    isDrawerOpen = false;
-  }
 </script>
 
 <Sheet.Root bind:open={isDrawerOpen}>
@@ -187,46 +187,121 @@ Los filtros en el Drawer **no se deben aplicar instantáneamente** mientras el u
       </Sheet.Title>
       <Sheet.Description>Ajusta los parámetros para segmentar el listado.</Sheet.Description>
     </Sheet.Header>
-    <Separator />
 
-    <div class="flex-1 overflow-y-auto space-y-6 px-4 my-2">
-      <!-- Status Option List -->
-      <div class="space-y-3">
-        <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Estado</h4>
-        <div class="flex flex-col gap-3.5 pl-1">
-          {#each statuses as status}
-            <div class="flex items-center space-x-2.5">
-              <Checkbox
-                id={`status-${status}`}
-                checked={tempStatus.includes(status)}
-                onCheckedChange={(checked: any) => {
-                  if (checked) {
-                    tempStatus = [...tempStatus, status];
-                  } else {
-                    tempStatus = tempStatus.filter((x) => x !== status);
-                  }
-                }}
-              />
-              <label
-                for={`status-${status}`}
-                class="text-sm font-medium leading-none cursor-pointer capitalize text-muted-foreground select-none"
-              >
-                {status}
-              </label>
-            </div>
-          {/each}
-        </div>
-      </div>
-    </div>
-
-    <Separator />
-    <Sheet.Footer class="pt-2 flex gap-3">
-      <Sheet.Close class={buttonVariants({ variant: 'outline' })}>Close</Sheet.Close>
-      <Button class={buttonVariants({ variant: 'default' })} onclick={applyFilters}>Aplicar</Button>
-    </Sheet.Footer>
+    {#if isDrawerOpen}
+      <EntityFiltersDrawerForm
+        {filters}
+        {statuses}
+        {categories}
+        onApplied={() => {
+          isDrawerOpen = false;
+        }}
+      />
+    {/if}
   </Sheet.Content>
 </Sheet.Root>
 ```
+
+#### Formulario Borrador del Drawer
+
+```svelte
+<!-- EntityFiltersDrawerForm.svelte -->
+<script lang="ts">
+  import { defaults, superForm } from 'sveltekit-superforms';
+  import { zod4Client } from 'sveltekit-superforms/adapters';
+  import { Checkbox } from '$lib/components/ui/checkbox';
+  import { Button } from '$lib/components/ui/button';
+  import { Separator } from '$lib/components/ui/separator';
+  import * as Sheet from '$lib/components/ui/sheet';
+  import { entityFiltersSchema, type EntityFiltersForm } from '$modules/entity/schemas';
+  import type { createEntityFilters } from '../filters.svelte';
+
+  let {
+    filters,
+    statuses = [],
+    categories = [],
+    onApplied,
+  }: {
+    filters: ReturnType<typeof createEntityFilters>;
+    statuses?: string[];
+    categories?: string[];
+    onApplied: () => void;
+  } = $props();
+
+  function createInitialValues(): EntityFiltersForm {
+    return {
+      status: [...filters.state.status],
+      category: [...filters.state.category],
+    };
+  }
+
+  const initialForm = defaults(createInitialValues(), zod4Client(entityFiltersSchema));
+  const { form, validateForm } = superForm(initialForm, {
+    validators: zod4Client(entityFiltersSchema),
+    SPA: true,
+    validationMethod: 'onsubmit',
+  });
+
+  function toggleArrayValue(field: 'status' | 'category', value: string, checked: boolean) {
+    form.update((current) => {
+      const values = current[field];
+      return {
+        ...current,
+        [field]: checked ? [...values, value] : values.filter((item) => item !== value),
+      };
+    });
+  }
+
+  async function applyFilters() {
+    const result = await validateForm({ update: true });
+    if (!result.valid) return;
+
+    filters.setStatus(result.data.status);
+    filters.setCategory(result.data.category);
+    onApplied();
+  }
+</script>
+
+<div class="flex-1 overflow-y-auto space-y-6 px-4 my-2">
+  <div class="space-y-3">
+    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Estado</h4>
+    <div class="flex flex-col gap-3.5 pl-1">
+      {#each statuses as status}
+        <div class="flex items-center space-x-2.5">
+          <Checkbox
+            id={`status-${status}`}
+            checked={$form.status.includes(status)}
+            onCheckedChange={(checked: boolean) =>
+              toggleArrayValue('status', status, checked === true)}
+          />
+          <label
+            for={`status-${status}`}
+            class="text-sm font-medium leading-none cursor-pointer capitalize text-muted-foreground select-none"
+          >
+            {status}
+          </label>
+        </div>
+      {/each}
+    </div>
+  </div>
+</div>
+
+<Separator />
+<Sheet.Footer class="pt-2 flex gap-3">
+  <Sheet.Close class="w-full sm:flex-1">
+    <Button variant="outline" class="w-full">Cancelar</Button>
+  </Sheet.Close>
+  <Button class="w-full sm:flex-1" onclick={applyFilters}>Aplicar</Button>
+</Sheet.Footer>
+```
+
+### Resumen del Patrón
+
+- `filters.svelte.ts` sigue siendo la fuente de verdad aplicada.
+- El drawer usa un draft aislado basado en `superforms`.
+- El componente padre solo controla `open`.
+- El componente hijo controla el draft y aplica los cambios al confirmar.
+- Cerrar el drawer sin aplicar equivale a descartar el draft.
 
 ---
 
@@ -358,7 +433,7 @@ El archivo de la ruta unifica el buscador de texto (`Input`), el botón "Restabl
   import { Input } from '$lib/components/ui/input';
   import { Button } from '$lib/components/ui/button';
   import { Skeleton } from '$lib/components/ui/skeleton';
-  import { AlertCircle, RotateCcw } from '@lucide/svelte';
+  import { CircleAlert, RotateCcw } from '@lucide/svelte';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
 
   const entitiesQuery = useEntities();
@@ -420,7 +495,7 @@ El archivo de la ruta unifica el buscador de texto (`Input`), el botón "Restabl
     </div>
   {:else if entitiesQuery.isError}
     <Alert variant="destructive">
-      <AlertCircle class="h-4 w-4" />
+      <CircleAlert class="h-4 w-4" />
       <AlertDescription>Error al cargar información.</AlertDescription>
     </Alert>
   {:else if entitiesQuery.data}

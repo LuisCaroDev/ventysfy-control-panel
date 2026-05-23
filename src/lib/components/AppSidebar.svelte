@@ -7,6 +7,7 @@
   import { setMode, userPrefersMode } from 'mode-watcher';
   import {
     Building2,
+    Users,
     LayoutDashboard,
     CreditCard,
     ShieldHalf,
@@ -22,6 +23,7 @@
 
   const managementItems = [
     { name: 'Negocios', href: '/businesses', icon: Building2, disabled: false },
+    { name: 'Usuarios', href: '/users', icon: Users, disabled: false },
     { name: 'Planes', href: '/plans', icon: CreditCard, disabled: true },
     { name: 'Team', href: '/team', icon: ShieldHalf, disabled: true },
   ];

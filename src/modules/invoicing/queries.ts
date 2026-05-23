@@ -13,18 +13,23 @@ import {
   type InvoicingConfigApiValues,
 } from './schemas';
 
-export function useDocuments(businessDocNumber: string, from: string, to: string, status?: string[]) {
+export function useDocuments(
+  businessDocNumber: string,
+  from: string,
+  to: string,
+  status?: string[],
+) {
   return createQuery(() => ({
     queryKey: ['documents', businessDocNumber, from, to, status],
     queryFn: async () => {
       const fromISO = new Date(from).toISOString();
       const toISO = new Date(to).toISOString();
-      
+
       let url = `/api/invoicing/colombia/fiscal-record?businessId=${businessDocNumber}&from=${fromISO}&to=${toISO}`;
       if (status && status.length > 0) {
         url += `&status=${status.join(',')}`;
       }
-      
+
       const res = await apiFetch(url);
 
       const records = colFiscalRecordResponseSchema.array().parse(res);

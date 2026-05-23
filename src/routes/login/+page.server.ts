@@ -9,7 +9,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ cookies }) => {
   const form = await superValidate(zod4(loginSchema));
-  
+
   if (env.DEFAULT_ADMIN_EMAIL) {
     form.data.email = env.DEFAULT_ADMIN_EMAIL;
   }

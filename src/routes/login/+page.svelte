@@ -8,7 +8,7 @@
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import * as Select from '$lib/components/ui/select';
   import Logo from '$lib/components/ui/Logo.svelte';
-  import { AlertCircle, Loader2 } from '@lucide/svelte';
+  import { CircleAlert, LoaderCircle } from '@lucide/svelte';
 
   let { data, form: actionForm } = $props();
   let formActionError = $derived((actionForm as any)?.error);
@@ -16,6 +16,10 @@
   // Env selector state
   let selectedEnv = $state(data.env ?? 'dev');
   let isSettingEnv = $state(false);
+  const envOptions = [
+    { value: 'dev', label: 'UAT' },
+    { value: 'prod', label: 'Prod' },
+  ];
 
   async function handleEnvChange(value: string) {
     if (!value) return;
@@ -67,11 +71,12 @@
   <div class="py-2 absolute right-4 top-4 md:right-8 md:top-8 z-10">
     <Select.Root type="single" disabled={isSettingEnv} bind:value={selectedEnv}>
       <Select.Trigger class="w-[80px] h-7 text-xs">
-        {selectedEnv === 'dev' ? 'Dev' : 'Prod'}
+        {envOptions.find((option) => option.value === selectedEnv)!.label}
       </Select.Trigger>
       <Select.Content>
-        <Select.Item class="text-xs" value="dev">Dev</Select.Item>
-        <Select.Item class="text-xs" value="prod">Prod</Select.Item>
+        {#each envOptions as option}
+          <Select.Item class="text-xs" value={option.value}>{option.label}</Select.Item>
+        {/each}
       </Select.Content>
     </Select.Root>
   </div>
@@ -103,7 +108,7 @@
 
       {#if formActionError}
         <Alert variant="destructive">
-          <AlertCircle class="h-4 w-4" />
+          <CircleAlert class="h-4 w-4" />
           <AlertDescription>{formActionError}</AlertDescription>
         </Alert>
       {/if}
@@ -140,7 +145,7 @@
 
         <Button type="submit" class="w-full" disabled={$submitting}>
           {#if $submitting}
-            <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+            <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
             Iniciando sesión...
           {:else}
             Iniciar sesión
@@ -150,7 +155,7 @@
 
       <span class="text-xs text-center">
         <span class="text-muted-foreground">version</span>&nbsp;
-        <span>1.03</span>
+        <span>1.04</span>
       </span>
     </div>
   </div>

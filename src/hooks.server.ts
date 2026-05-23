@@ -1,7 +1,7 @@
 import { redirect, type Handle, type HandleServerError } from '@sveltejs/kit';
 import { decrypt } from '$lib/server/session';
 
-const protectedRoutes = ['/businesses', '/team', '/dashboard', '/plans'];
+const protectedRoutes = ['/businesses', '/users', '/team', '/dashboard', '/plans'];
 const publicRoutes = ['/login'];
 const defaultProtectedRoute = '/businesses';
 const defaultPublicRoute = '/login';
