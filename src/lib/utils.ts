@@ -22,3 +22,11 @@ export function replacePathParams(path: string, params: Record<string, string>):
     return encodeURIComponent(params[key]);
   });
 }
+
+export function percentageToRate(value: number) {
+  return Number((value / 100).toFixed(6));
+}
+
+export function rateToPercentage(value: number) {
+  return Number((value * 100).toFixed(2));
+}

@@ -155,7 +155,7 @@
 
       <span class="text-xs text-center">
         <span class="text-muted-foreground">version</span>&nbsp;
-        <span>1.04</span>
+        <span>1.05</span>
       </span>
     </div>
   </div>

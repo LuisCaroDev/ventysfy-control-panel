@@ -2,6 +2,8 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { useBusiness } from '$modules/businesses/queries';
+  import type { PaymentMethod } from '$modules/businesses/schemas';
+  import { rateToPercentage } from '$lib/utils';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import {
@@ -18,7 +20,6 @@
   import * as Card from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Avatar, AvatarFallback, AvatarImage } from '$lib/components/ui/avatar';
-  import { Separator } from '$lib/components/ui/separator';
   import * as Tabs from '$lib/components/ui/tabs';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
@@ -39,10 +40,14 @@
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import DialogGenerateCredentials from '$modules/businesses/components/DialogGenerateCredentials.svelte';
   import DialogDeleteAccount from '$modules/businesses/components/DialogDeleteAccount.svelte';
+  import BusinessPaymentMethodDrawer from '$modules/businesses/components/BusinessPaymentMethodDrawer.svelte';
 
   let businessId = $derived($page.params.businessId || '');
   let query = $derived(useBusiness(businessId));
   let business = $derived(query.data);
+  let showAllPaymentMethods = $state(false);
+  let showPaymentMethodDrawer = $state(false);
+  let selectedPaymentMethod = $state<PaymentMethod | null>(null);
 
   // Active tab state derived reactively from URL query parameter, defaulting to 'general'
   let activeTab = $derived($page.url.searchParams.get('tab') || 'general');
@@ -144,6 +149,21 @@
     }
   }
 
+  const MAX_VISIBLE_PAYMENT_METHODS = 3;
+
+  let paymentMethods = $derived(business?.salesConfig?.paymentMethodList ?? []);
+  let visiblePaymentMethods = $derived(
+    showAllPaymentMethods ? paymentMethods : paymentMethods.slice(0, MAX_VISIBLE_PAYMENT_METHODS),
+  );
+  let hiddenPaymentMethodsCount = $derived(
+    Math.max(paymentMethods.length - MAX_VISIBLE_PAYMENT_METHODS, 0),
+  );
+
+  function handleOpenPaymentMethod(method: PaymentMethod) {
+    selectedPaymentMethod = method;
+    showPaymentMethodDrawer = true;
+  }
+
   $effect(() => {
     if (business && !business.invoiceService?.enabled && activeTab === 'invoicing') {
       handleTabChange('general');
@@ -182,9 +202,9 @@
     <div class="flex items-start justify-between md:items-center gap-4 border-b pb-6">
       <div class="flex items-center gap-4 min-w-0">
         <Avatar class="h-16 w-16 rounded-2xl border shadow-sm shrink-0">
-          {#if business.logoPath}
+          <!-- {#if business.logoPath}
             <AvatarImage src={business.logoPath} alt={business.tradeName} class="object-cover" />
-          {/if}
+          {/if} -->
           <AvatarFallback class="rounded-2xl text-lg font-semibold">
             {business.tradeName.slice(0, 2).toUpperCase()}
           </AvatarFallback>
@@ -279,6 +299,67 @@
                     <p class="text-sm text-muted-foreground">{business.email}</p>
                   </div>
                 </div>
+              </Card.Content>
+            </Card.Root>
+
+            <Card.Root>
+              <Card.Header>
+                <div class="flex items-start gap-3">
+                  <div class="rounded-xl border bg-muted/40 p-2 text-muted-foreground">
+                    <Wallet class="h-5 w-5" />
+                  </div>
+                  <div class="space-y-1">
+                    <Card.Title>Métodos de pago</Card.Title>
+                    <Card.Description>Configuración de cobros para ventas.</Card.Description>
+                  </div>
+                </div>
+              </Card.Header>
+              <Card.Content>
+                {#if paymentMethods.length > 0}
+                  <div class="flex flex-col gap-3">
+                    {#each visiblePaymentMethods as paymentMethod}
+                      <div
+                        class="flex items-center justify-between gap-3 rounded-xl border bg-muted/20 px-3 py-2 transition-colors hover:bg-muted/40 cursor-pointer"
+                        role="button"
+                        tabindex="0"
+                        onclick={() => handleOpenPaymentMethod(paymentMethod)}
+                        onkeydown={(e: KeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleOpenPaymentMethod(paymentMethod);
+                          }
+                        }}
+                      >
+                        <div class="min-w-0">
+                          <p class="truncate text-sm font-medium">{paymentMethod.name}</p>
+                          <p class="text-xs text-muted-foreground">
+                            Comisión {rateToPercentage(paymentMethod.config.commissionPercentage)}%
+                          </p>
+                        </div>
+
+                        <Badge variant={paymentMethod.config.isEnabled ? 'default' : 'secondary'}>
+                          {paymentMethod.config.isEnabled ? 'Activo' : 'Inactivo'}
+                        </Badge>
+                      </div>
+                    {/each}
+
+                    {#if hiddenPaymentMethodsCount > 0}
+                      <Button
+                        variant="ghost"
+                        class="w-fit px-0 text-sm"
+                        onclick={() => (showAllPaymentMethods = !showAllPaymentMethods)}
+                      >
+                        {showAllPaymentMethods
+                          ? 'Mostrar menos'
+                          : `Mostrar ${hiddenPaymentMethodsCount} más`}
+                      </Button>
+                    {/if}
+                  </div>
+                {:else}
+                  <p class="text-sm text-muted-foreground">
+                    Este negocio no tiene métodos de pago configurados.
+                  </p>
+                {/if}
               </Card.Content>
             </Card.Root>
 
@@ -535,6 +616,11 @@
 
     <DialogGenerateCredentials bind:open={showGenerateCredsDialog} {business} />
     <DialogDeleteAccount bind:open={showDeleteAccountDialog} {business} />
+    <BusinessPaymentMethodDrawer
+      bind:open={showPaymentMethodDrawer}
+      companyId={business.id}
+      paymentMethod={selectedPaymentMethod}
+    />
   {/if}
 
   <BusinessInvoiceDetailsDrawer bind:open={showDetailsDrawer} document={selectedDocument} />

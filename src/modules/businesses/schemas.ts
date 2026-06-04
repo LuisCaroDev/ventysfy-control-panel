@@ -1,12 +1,5 @@
 import { z } from 'zod';
-
-export const countrySchema = z.object({
-  code2: z.string().length(2),
-  code3: z.string().length(3),
-  value: z.string(),
-  locale: z.string().optional(),
-  timeZone: z.string().optional(),
-});
+import { countrySchema } from '$lib/schemas/country';
 
 export const subscriptionSchema = z.object({
   id: z.string().uuid(),
@@ -31,21 +24,40 @@ export const subscriptionSchema = z.object({
   }),
 });
 
+export const paymentMethodConfigSchema = z.object({
+  isEnabled: z.boolean(),
+  commissionPercentage: z.number(),
+  companyPaysCommission: z.boolean(),
+});
+
+export const paymentMethodSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  config: paymentMethodConfigSchema,
+});
+
+export const updatePaymentMethodFormSchema = z.object({
+  isEnabled: z.boolean(),
+  commissionPercentage: z.coerce
+    .number({ error: 'Ingresa una comisión válida.' })
+    .min(0, 'La comisión no puede ser menor a 0%.')
+    .max(100, 'La comisión no puede ser mayor a 100%.'),
+  clientAssumesCommission: z.boolean(),
+});
+
 export const businessSchema = z.object({
   id: z.string(),
   logoPath: z.string().nullable().optional(),
-  enableCashCount: z.boolean().optional(),
-  validateCashCount: z.boolean().optional(),
-  cashMovementCategoryList: z
-    .array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        type: z.enum(['income', 'expense']),
-        enabled: z.boolean(),
-      }),
-    )
-    .optional(),
+  enableCashCount: z.boolean(),
+  validateCashCount: z.boolean(),
+  cashMovementCategoryList: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      type: z.enum(['income', 'expense']),
+      enabled: z.boolean(),
+    }),
+  ),
   email: z.string().email(),
   tradeName: z.string(),
   companyName: z.string(),
@@ -88,6 +100,7 @@ export const businessSchema = z.object({
         enabledPhone: z.boolean(),
         enabledAddres: z.boolean(),
       }),
+      paymentMethodList: z.array(paymentMethodSchema),
     })
     .optional(),
   invoiceService: z.object({
@@ -97,20 +110,20 @@ export const businessSchema = z.object({
     updateDate: z.string().nullable().optional(),
     email: z.string().nullable().optional(),
   }),
-  branches: z
-    .array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-      }),
-    )
-    .optional(),
-  createdAt: z.string().datetime().optional(),
-  updatedAt: z.string().datetime().optional(),
+  branches: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+  ),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
   status: z.string(),
 });
 
 export type Business = z.infer<typeof businessSchema>;
+export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
+export type UpdatePaymentMethodForm = z.infer<typeof updatePaymentMethodFormSchema>;
 export const businessesResponseSchema = z.object({
   data: z.object({
     clients: z.array(businessSchema),
